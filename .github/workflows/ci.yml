@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: windows-latest
 
     steps:
@@ -25,6 +24,3 @@ jobs:
 
     - name: Build do projeto
       run: dotnet build --configuration Release --no-restore
-
-    - name: Rodar o programa
-      run: dotnet run --project ./SearchAnimals.csproj
