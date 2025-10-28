@@ -17,8 +17,7 @@ class Program
             new Animal { Nome = "Lemure", ImagemPath = @"img\lemure.jpg" },
             new Animal { Nome = "Tartaruga", ImagemPath = @"img\tartaruga.jpg" },
             new Animal { Nome = "Baiacu", ImagemPath = @"img\baiacu.jpg" },
-            new Animal { Nome = "Sucuri", ImagemPath = @"img\sucuri.jpg" },
-            new Animal { Nome = "Toupeira", ImagemPath = @"img\toupeira.jpg" }
+            new Animal { Nome = "Sucuri", ImagemPath = @"img\sucuri.jpg" }
         };
 
         while (true)
