@@ -62,12 +62,13 @@ jobs:
         run: |
           Start-Process -NoNewWindow -FilePath "dotnet" -ArgumentList "run --project ./Caminho/Para/SeuProjeto/BuscaAnimais.csproj"
           Start-Sleep -Seconds 15
-      - name: Instalar OWASP ZAP
+      - name: Baixar OWASP ZAP
         run: |
-          choco install owasp-zap -y
+          Invoke-WebRequest -Uri "https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2_15_0_windows.zip" -OutFile "zap.zip"
+          Expand-Archive zap.zip -DestinationPath "C:\zap"
       - name: Executar varredura OWASP ZAP
         run: |
-          zap.bat -cmd -quickurl http://localhost:5000 -quickout zap_report.html
+          C:\zap\ZAP_2.15.0\zap.bat -cmd -quickurl http://localhost:5000 -quickout zap_report.html
       - name: Upload do relatório ZAP
         uses: actions/upload-artifact@v4
         with:
