@@ -61,6 +61,208 @@ jobs:
 
 
   # (DAST) 
+  ChatGPT
+You said:
+name: CI - BuscaAnimais
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checar o repositório
+      uses: actions/checkout@v3
+
+    - name: Configurar .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restaurar pacotes
+      run: dotnet restore
+
+    - name: Build do projeto
+      run: dotnet build --configuration Release --no-restore Inclua dois nós um para SAST e outro para DAST com respectivas validações
+ChatGPT said:
+Perfeito 👍 Aqui está o workflow YAML completo do GitHub Actions com a sua pipeline CI para o projeto BuscaAnimais, incluindo análises SAST (estática) e DAST (dinâmica).
+Usei ferramentas amplamente adotadas e compatíveis com GitHub Actions:
+
+SAST: CodeQL (análise de código estático).
+
+DAST: OWASP ZAP (teste de segurança dinâmica via scan HTTP).
+
+name: CI - BuscaAnimais
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checar o repositório
+      uses: actions/checkout@v3
+
+    - name: Configurar .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restaurar pacotes
+      run: dotnet restore
+
+    - name: Build do projeto
+      run: dotnet build --configuration Release --no-restore
+
+  # 🔍 Análise Estática de Segurança (SAST) com CodeQL
+  sast:
+    name: SAST - CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v3
+
+    - name: Inicializar CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+
+    - name: Compilar o código para análise
+      run: dotnet build --configuration Release
+
+    - name: Executar análise CodeQL
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:csharp"
+
+  # 🧪 Análise Dinâmica de Segurança (DAST) com OWASP ZAP
+  dast:
+    name: DAST - OWASP ZAP
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v3
+
+    - name: Iniciar aplicação (API ou site) para testes
+      run: |
+        dotnet run --project ./Caminho/Para/SeuProjeto/BuscaAnimais.csproj &
+        sleep 15  # tempo para a aplicação subir
+
+    - name: Executar OWASP ZAP baseline scan
+      uses: zaproxy/action-baseline@v0.12.0
+      with:
+        target: 'http://localhost:5000'
+        rules_file_name: '.zap/rules.tsv'
+        cmd_options: '-a'  # modo agressivo opcional
+🔧 Explicação dos novos nós
+SAST (CodeQL)
+Faz análise estática do código C# em busca de vulnerabilidades (SQL Injection, XSS, deserialização insegura etc.).
+
+Pode ser visualizado nos “Security → Code scanning alerts” do GitHub.
+
+DAST (OWASP ZAP)
+Realiza varredura dinâmica sobre a aplicação em execução.
+
+O campo target deve apontar para o endpoint onde a aplicação sobe (por exemplo, http://localhost:5000 ou o endereço de teste configurado).
+
+Se quiser, posso adaptar o workflow para:
+
+rodar SAST e DAST apenas em PRs,
+
+gerar relatórios HTML anexados ao job,
+
+ou integrar com SonarCloud em vez de CodeQL.
+
+Quer que eu configure uma dessas opções também?
+
+You said:
+Todos para Windows 
+ChatGPT said:
+Perfeito ✅ — aqui está o workflow GitHub Actions completo, ajustado para que todos os jobs (build, SAST e DAST) sejam executados em Windows (usando windows-latest).
+
+Usei ferramentas compatíveis com Windows runners:
+
+SAST: CodeQL (nativo do GitHub, funciona em Windows).
+
+DAST: OWASP ZAP (usando Java no Windows).
+
+name: CI - BuscaAnimais
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build do Projeto
+    runs-on: windows-latest
+
+    steps:
+    - name: Checar o repositório
+      uses: actions/checkout@v3
+
+    - name: Configurar .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restaurar pacotes
+      run: dotnet restore
+
+    - name: Build do projeto
+      run: dotnet build --configuration Release --no-restore
+
+
+  # 🔍 Análise Estática de Segurança (SAST) - CodeQL
+  sast:
+    name: SAST - CodeQL
+    runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checar o repositório
+      uses: actions/checkout@v3
+
+    - name: Configurar .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Inicializar CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+
+    - name: Compilar o código
+      run: dotnet build --configuration Release
+
+    - name: Executar análise CodeQL
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:csharp"
+
+
+  # 🧪 Análise Dinâmica de Segurança (DAST) - OWASP ZAP
   dast:
     name: DAST - OWASP ZAP
     runs-on: windows-latest
@@ -90,6 +292,141 @@ jobs:
 
     - name: Upload do relatório ZAP
       uses: actions/upload-artifact@v3
+      with:
+        name: zap-report
+        path: zap_report.html
+🧩 Explicação dos novos nós
+SAST (CodeQL)
+Analisa o código C# localmente, diretamente no runner Windows.
+
+Resultados aparecem em Security → Code scanning alerts no GitHub.
+
+DAST (OWASP ZAP)
+Instala o ZAP via Chocolatey (choco).
+
+Executa um scan dinâmico contra a aplicação rodando localmente (http://localhost:5000).
+
+Gera um relatório zap_report.html anexado como artefato do workflow.
+
+✅ Personalizações possíveis
+Posso incluir facilmente:
+
+Geração automática de relatório CodeQL em HTML;
+
+Execução paralela ou sequencial dos jobs;
+
+Parâmetros de alerta de falhas críticas (ex: falhar o pipeline se o ZAP encontrar vulnerabilidades de alto risco).
+
+Quer que eu configure o workflow para falhar automaticamente se vulnerabilidades críticas forem detectadas (em SAST ou DAST)?
+
+You said:
+Current runner version: '2.329.0'
+Runner Image Provisioner
+Operating System
+Runner Image
+GITHUB_TOKEN Permissions
+Secret source: Actions
+Prepare workflow directory
+Prepare all required actions
+Getting action download info
+Error: This request has been automatically failed because it uses a deprecated version of actions/upload-artifact: v3. Learn more: https://github.blog/changelog/2024-04-16-deprecation-notice-v3-of-the-artifact-actions/
+ChatGPT said:
+Excelente observação 👀 — esse erro ocorre porque o GitHub descontinuou a versão v3 do actions/upload-artifact (e também do download-artifact).
+Agora, só as versões v4 e posteriores são aceitas (desde abril de 2024).
+
+Aqui está o workflow corrigido e atualizado com o novo padrão (✅ compatível com o runner 2.329.0):
+
+name: CI - BuscaAnimais
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build do Projeto
+    runs-on: windows-latest
+
+    steps:
+    - name: Checar o repositório
+      uses: actions/checkout@v4
+
+    - name: Configurar .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restaurar pacotes
+      run: dotnet restore
+
+    - name: Build do projeto
+      run: dotnet build --configuration Release --no-restore
+
+
+  # 🔍 Análise Estática de Segurança (SAST) - CodeQL
+  sast:
+    name: SAST - CodeQL
+    runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checar o repositório
+      uses: actions/checkout@v4
+
+    - name: Configurar .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Inicializar CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+
+    - name: Compilar o código
+      run: dotnet build --configuration Release
+
+    - name: Executar análise CodeQL
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:csharp"
+
+
+  # 🧪 Análise Dinâmica de Segurança (DAST) - OWASP ZAP
+  dast:
+    name: DAST - OWASP ZAP
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+    - name: Checar o repositório
+      uses: actions/checkout@v4
+
+    - name: Configurar .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Iniciar aplicação para testes
+      run: |
+        Start-Process -NoNewWindow -FilePath "dotnet" -ArgumentList "run --project ./Caminho/Para/SeuProjeto/BuscaAnimais.csproj"
+        Start-Sleep -Seconds 15
+
+    - name: Instalar OWASP ZAP
+      run: |
+        choco install owasp-zap -y
+
+    - name: Executar varredura OWASP ZAP
+      run: |
+        zap.bat -cmd -quickurl http://localhost:5000 -quickout zap_report.html
+
+    - name: Upload do relatório ZAP
+      uses: actions/upload-artifact@v4
       with:
         name: zap-report
         path: zap_report.html
