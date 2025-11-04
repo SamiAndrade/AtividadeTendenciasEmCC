@@ -1,3 +1,4 @@
+
 name: CI - BuscaAnimais
 
 on:
@@ -8,6 +9,7 @@ on:
 
 jobs:
   build:
+    name: Build do Projeto
     runs-on: windows-latest
 
     steps:
@@ -24,3 +26,70 @@ jobs:
 
     - name: Build do projeto
       run: dotnet build --configuration Release --no-restore
+
+
+  #  (SAST) 
+  sast:
+    name: SAST - CodeQL
+    runs-on: windows-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checar o repositório
+      uses: actions/checkout@v3
+
+    - name: Configurar .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Inicializar CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+
+    - name: Compilar o código
+      run: dotnet build --configuration Release
+
+    - name: Executar análise CodeQL
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:csharp"
+
+
+  # (DAST) 
+  dast:
+    name: DAST - OWASP ZAP
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+    - name: Checar o repositório
+      uses: actions/checkout@v3
+
+    - name: Configurar .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Iniciar aplicação para testes
+      run: |
+        Start-Process -NoNewWindow -FilePath "dotnet" -ArgumentList "run --project ./Caminho/Para/SeuProjeto/BuscaAnimais.csproj"
+        Start-Sleep -Seconds 15
+
+    - name: Instalar OWASP ZAP
+      run: |
+        choco install owasp-zap -y
+
+    - name: Executar varredura OWASP ZAP
+      run: |
+        zap.bat -cmd -quickurl http://localhost:5000 -quickout zap_report.html
+
+    - name: Upload do relatório ZAP
+      uses: actions/upload-artifact@v3
+      with:
+        name: zap-report
+        path: zap_report.html
